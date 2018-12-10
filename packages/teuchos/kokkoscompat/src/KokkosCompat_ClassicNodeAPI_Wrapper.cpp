@@ -30,6 +30,19 @@ namespace Kokkos {
     }
 #endif
 
+#ifdef KOKKOS_ENABLE_HPX
+    template<>
+    std::string KokkosDeviceWrapperNode<Kokkos::HPX>::name () {
+      return "HPX/Wrapper";
+    }
+
+    template<>
+    Teuchos::ParameterList
+    KokkosDeviceWrapperNode<Kokkos::HPX>::getDefaultParameters () {
+      return Teuchos::ParameterList ();
+    }
+#endif
+
 #ifdef KOKKOS_ENABLE_SERIAL
     template<>
     std::string KokkosDeviceWrapperNode<Kokkos::Serial>::name () {

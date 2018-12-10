@@ -88,6 +88,8 @@ namespace Details {
     typedef ::Kokkos::Compat::KokkosCudaWrapperNode DefaultNodeType;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_OPENMPWRAPPERNODE)
     typedef ::Kokkos::Compat::KokkosOpenMPWrapperNode DefaultNodeType;
+#elif defined(HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE)
+      typedef ::Kokkos::Compat::KokkosHPXWrapperNode DefaultNodeType;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_THREADSWRAPPERNODE)
     typedef ::Kokkos::Compat::KokkosThreadsWrapperNode DefaultNodeType;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_SERIALWRAPPERNODE)

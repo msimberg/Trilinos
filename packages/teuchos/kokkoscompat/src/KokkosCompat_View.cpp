@@ -74,10 +74,18 @@ namespace Kokkos {
 #define COMPAT_INSTANT_OPENMP(T)
 #endif
 
+#if defined(KOKKOS_ENABLE_HPX)
+#define COMPAT_INSTANT_HPX(T) \
+    COMPAT_INSTANT(T,Kokkos::HPX)
+#else
+#define COMPAT_INSTANT_HPX(T)
+#endif
+
 #define COMPAT_INSTANT_ALL(T) \
     COMPAT_INSTANT_SERIAL(T) \
     COMPAT_INSTANT_THREADS(T) \
     COMPAT_INSTANT_OPENMP(T) \
+    COMPAT_INSTANT_HPX(T) \
     COMPAT_INSTANT(T,Kokkos::HostSpace)
 
     COMPAT_INSTANT_ALL(float)
@@ -89,7 +97,7 @@ namespace Kokkos {
     COMPAT_INSTANT_ALL(char)
     COMPAT_INSTANT_ALL(short)
 
-#if defined(KOKKOS_ENABLE_OPENMP)
+#if defined(KOKKOS_ENABLE_CUDA)
 #define COMPAT_INSTANT_CUDA(T) \
     COMPAT_INSTANT(T,Kokkos::Cuda)
 #else

@@ -93,6 +93,8 @@ namespace DefaultTypes {
   using execution_space = ::Kokkos::Cuda;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_OPENMPWRAPPERNODE)
   using execution_space = ::Kokkos::OpenMP;
+#elif defined(HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE)
+    using execution_space = ::Kokkos::HPX;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_THREADSWRAPPERNODE)
   using execution_space = ::Kokkos::Threads;
 #elif defined(HAVE_TPETRA_DEFAULTNODE_SERIALWRAPPERNODE)

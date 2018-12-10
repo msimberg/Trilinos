@@ -20,6 +20,13 @@
 #  define HAVE_KOKKOSCLASSIC_DEFAULTNODE_OPENMPWRAPPERNODE 1
 #endif // HAVE_TPETRA_DEFAULTNODE_OPENMPWRAPPERNODE
 
+// Defined if and only if Tpetra's default execution space is Kokkos::HPX.
+#cmakedefine HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE
+// For backwards compatibility ONLY.
+#ifdef HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE
+#  define HAVE_KOKKOSCLASSIC_DEFAULTNODE_HPXWRAPPERNODE 1
+#endif // HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE
+
 // Defined if and only if Tpetra's default execution space is Kokkos::Threads.
 #cmakedefine HAVE_TPETRA_DEFAULTNODE_THREADSWRAPPERNODE
 // For backwards compatibility ONLY.

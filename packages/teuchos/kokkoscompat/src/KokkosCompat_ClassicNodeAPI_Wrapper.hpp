@@ -71,6 +71,10 @@ public:
   typedef KokkosDeviceWrapperNode<Kokkos::OpenMP> KokkosOpenMPWrapperNode;
 #endif
 
+#ifdef KOKKOS_ENABLE_HPX
+  typedef KokkosDeviceWrapperNode<Kokkos::HPX> KokkosHPXWrapperNode;
+#endif
+
 #ifdef KOKKOS_ENABLE_THREADS
   typedef KokkosDeviceWrapperNode<Kokkos::Threads> KokkosThreadsWrapperNode;
 #endif

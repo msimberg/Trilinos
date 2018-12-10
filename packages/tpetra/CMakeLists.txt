@@ -272,7 +272,7 @@ ENDIF ()
 # The availability and instantiation macros are THE SAME.
 #
 # The ordinal types are: INT_INT, INT_UNSIGNED, INT_LONG, INT_LONG_LONG, INT_UNSIGNED_LONG
-# The node types are:    SERIAL, OPENMP, PTHREAD, CUDA
+# The node types are:    SERIAL, OPENMP, HPX, PTHREAD, CUDA
 # The scalar types are:  DOUBLE, FLOAT, COMPLEX_DOUBLE, COMPLEX_FLOAT
 #
 # A downstream package or application should use the availability
@@ -335,10 +335,12 @@ SET(${PACKAGE_NAME}_ETI_NODES "")
 
 GLOBAL_SET(HAVE_TPETRA_INST_SERIAL_DEFAULT OFF)
 GLOBAL_SET(HAVE_TPETRA_INST_PTHREAD_DEFAULT OFF)
-GLOBAL_SET(HAVE_TPETRA_INST_OPENMP_DEFAULT OFF)  
-GLOBAL_SET(HAVE_TPETRA_INST_CUDA_DEFAULT OFF)  
+GLOBAL_SET(HAVE_TPETRA_INST_OPENMP_DEFAULT OFF)
+GLOBAL_SET(HAVE_TPETRA_INST_HPX_DEFAULT OFF)
+GLOBAL_SET(HAVE_TPETRA_INST_CUDA_DEFAULT OFF)
 
 ASSERT_DEFINED(Kokkos_ENABLE_OpenMP)
+ASSERT_DEFINED(Kokkos_ENABLE_HPX)
 ASSERT_DEFINED(Kokkos_ENABLE_Pthread)
 ASSERT_DEFINED(Kokkos_ENABLE_Serial)
 
@@ -360,15 +362,19 @@ ELSE()
     # analogous situation with CUDA.
     GLOBAL_SET(HAVE_TPETRA_INST_OPENMP_DEFAULT ON)  
   ELSE()
-    IF (Kokkos_ENABLE_Serial)
-      GLOBAL_SET(HAVE_TPETRA_INST_SERIAL_DEFAULT ON)
+    IF (Kokkos_ENABLE_HPX)
+      GLOBAL_SET(HAVE_TPETRA_INST_HPX_DEFAULT ON)
     ELSE()
-      IF (Kokkos_ENABLE_Pthread)
-        GLOBAL_SET(HAVE_TPETRA_INST_PTHREAD_DEFAULT ON)
+      IF (Kokkos_ENABLE_Serial)
+        GLOBAL_SET(HAVE_TPETRA_INST_SERIAL_DEFAULT ON)
       ELSE()
-        MESSAGE(FATAL_ERROR "Tpetra: No Kokkos execution space is enabled.  This message should only come up if you explicitly disabled all the Kokkos execution spaces.  If you don't want Tpetra to use threads, try setting Kokkos_ENABLE_Serial=ON.")
-      ENDIF()  # Kokkos_ENABLE_Pthread
-    ENDIF() # Kokkos_ENABLE_Serial
+        IF (Kokkos_ENABLE_Pthread)
+          GLOBAL_SET(HAVE_TPETRA_INST_PTHREAD_DEFAULT ON)
+        ELSE()
+          MESSAGE(FATAL_ERROR "Tpetra: No Kokkos execution space is enabled.  This message should only come up if you explicitly disabled all the Kokkos execution spaces.  If you don't want Tpetra to use threads, try setting Kokkos_ENABLE_Serial=ON.")
+        ENDIF()  # Kokkos_ENABLE_Pthread
+      ENDIF() # Kokkos_ENABLE_Serial
+    ENDIF() # Kokkos_ENABLE_HPX
   ENDIF() # Kokkos_ENABLE_OpenMP
 ENDIF() # Tpetra_ENABLE_CUDA
 
@@ -438,6 +444,30 @@ ELSE () # NOT Tpetra_INST_OPENMP
   ENDIF ()
 ENDIF ()
 
+# Kokkos::HPX (Kokkos::Compat::KokkosHPXWrapperNode)
+TRIBITS_ADD_OPTION_AND_DEFINE(
+  Tpetra_INST_HPX
+  HAVE_TPETRA_INST_HPX
+  "Instantiate and/or test Tpetra classes over Node = Kokkos::Compat::KokkosHPXWrapperNode.  If ETI is OFF, enable tests for that Node type.  This option is ${HAVE_TPETRA_INST_HPX_DEFAULT} by default."
+  ${HAVE_TPETRA_INST_HPX_DEFAULT}
+  )
+GLOBAL_SET(HAVE_TPETRA_HPX ${Tpetra_INST_HPX})
+IF (Tpetra_INST_HPX)
+  IF (NOT ${PROJECT_NAME}_ENABLE_HPX)
+    MESSAGE(FATAL_ERROR "Tpetra: If you want to enable HPX in Tpetra by setting the CMake option Tpetra_INST_HPX:BOOL=ON, then you must also enable HPX in all of Trilinos by setting ${PROJECT_NAME}_ENABLE_HPX:BOOL=ON.  Capitalization matters.")
+  ENDIF ()
+  IF (NOT Kokkos_ENABLE_HPX)
+    MESSAGE(FATAL_ERROR "Tpetra: If you want to enable HPX in Tpetra by setting the CMake option Tpetra_INST_HPX:BOOL=ON, then you must enable HPX in Kokkos by setting Kokkos_ENABLE_HPX:BOOL=ON.  Capitalization matters.  You do not normally need to set Kokkos_ENABLE_HPX:BOOL=ON explicitly if you have enabled HPX in all of Trilinos (by setting ${PROJECT_NAME}_ENABLE_HPX:BOOL=ON).  Thus, this message likely will only appear if you enabled HPX in Trilinos, explicitly disabled HPX in Kokkos, and explicitly enabled HPX in Tpetra.  ")
+  ENDIF ()
+ELSE () # NOT Tpetra_INST_HPX
+  IF (HAVE_TPETRA_DEFAULTNODE_HPXWRAPPERNODE)
+    MESSAGE(FATAL_ERROR "Tpetra: The HPX Node is disabled, since Tpetra_INST_HPX:BOOL=OFF, but you set that as the default Node type.  Please don't do that.  If you want HPX in Tpetra, you must set ${PROJECT_NAME}_ENABLE_HPX:BOOL=ON.  Capitalization matters.  If this still does not work, please make sure that you are not disabling HPX in Kokkos (by setting Kokkos_ENABLE_HPX incorrectly).")
+  ENDIF()
+  IF (Kokkos_ENABLE_HPX)
+    MESSAGE(STATUS "NOTE: Kokkos::HPX is ON (the CMake option Kokkos_ENABLE_HPX is ON), but the corresponding Tpetra Node type is disabled.  If you want to enable instantiation and use of Kokkos::HPX in Tpetra, please also set the CMake option Tpetra_INST_HPX:BOOL=ON.  If you use the Kokkos::HPX Node type in Tpetra without doing this, you will get link errors.  This is not an error unless you actually try using HPX in Tpetra.")
+  ENDIF ()
+ENDIF ()
+
 # Kokkos::Threads (Kokkos::Compat::KokkosThreadsWrapperNode)
 TRIBITS_ADD_OPTION_AND_DEFINE(
   Tpetra_INST_PTHREAD
@@ -488,8 +518,8 @@ ENDIF () # Tpetra_INST_CUDA
 # Pthreads back-ends.
 #
 
-IF (Tpetra_INST_OPENMP AND TPETRA_INST_PTHREAD)
-  MESSAGE (FATAL_ERROR "You set both Tpetra_INST_OPENMP=ON and Tpetra_INST_PTHREAD=ON.  This is not allowed, because Kokkos (as of Dec 2017) forbids users from enabling both the OpenMP and Pthreads back-ends.")
+IF ((Tpetra_INST_OPENMP AND TPETRA_INST_PTHREAD) OR (Tpetra_INST_OPENMP AND TPETRA_INST_HPX) OR (TPETRA_INST_THREAD AND Tpetra_INST_HPX))
+  MESSAGE (FATAL_ERROR "You enabled at least two of Tpetra_INST_OPENMP, Tpetra_INST_PTHREAD=ON, and Tpetra_INST_HPX.  This is not allowed, because Kokkos (as of Dec 2017) forbids users from enabling more than one threaded CPU back-ends.")
 ENDIF ()
 
 #
@@ -507,6 +537,10 @@ IF(Tpetra_INST_OPENMP)
   LIST(APPEND ${PACKAGE_NAME}_ETI_DEVICES "Kokkos::Device<Kokkos::OpenMP, Kokkos::HostSpace>")
   LIST(APPEND ${PACKAGE_NAME}_ETI_NODES "Kokkos::Compat::KokkosOpenMPWrapperNode")
 ENDIF()
+IF(Tpetra_INST_HPX) 
+  LIST(APPEND ${PACKAGE_NAME}_ETI_DEVICES "Kokkos::Device<Kokkos::HPX, Kokkos::HostSpace>")
+  LIST(APPEND ${PACKAGE_NAME}_ETI_NODES "Kokkos::Compat::KokkosHPXWrapperNode")
+ENDIF()
 IF(Tpetra_INST_CUDA) 
   # TpetraCore currently requires UVM, so it doesn't make sense to
   # instantiate over Kokkos::CudaSpace as well as
@@ -520,11 +554,12 @@ MESSAGE(STATUS "Tpetra execution space availability (ON means available): ")
 MESSAGE(STATUS "  - Serial:  ${HAVE_TPETRA_SERIAL}")
 MESSAGE(STATUS "  - Threads: ${HAVE_TPETRA_PTHREAD}")
 MESSAGE(STATUS "  - OpenMP:  ${HAVE_TPETRA_OPENMP}")
+MESSAGE(STATUS "  - HPX:     ${HAVE_TPETRA_HPX}")
 MESSAGE(STATUS "  - Cuda:    ${HAVE_TPETRA_CUDA}")
 
 # Fix Github Issue #190 by making sure that users enabled at least one
 # Node type.
-IF(NOT Tpetra_INST_SERIAL AND NOT Tpetra_INST_PTHREAD AND NOT Tpetra_INST_OPENMP AND NOT Tpetra_INST_CUDA)
+IF(NOT Tpetra_INST_SERIAL AND NOT Tpetra_INST_PTHREAD AND NOT Tpetra_INST_OPENMP AND NOT Tpetra_INST_CUDA AND NOT Tpetra_INST_HPX)
   MESSAGE(FATAL_ERROR "It appears that you have disabled all of Tpetra's Node types.  This is a bad idea; please don't do this.  This may have happened either if all Kokkos execution spaces got disabled, or if you explicitly disabled some Tpetra Node types.  To fix this, look in your CMake configuration to see if you set any of the following variables to OFF explicitly:  Kokkos_ENABLE_Cuda, Kokkos_ENABLE_OpenMP, Kokkos_ENABLE_Serial, Kokkos_ENABLE_Pthread, Tpetra_INST_SERIAL, Tpetra_INST_PTHREAD, Tpetra_INST_OPENMP, or Tpetra_INST_CUDA.")
 ENDIF()
 

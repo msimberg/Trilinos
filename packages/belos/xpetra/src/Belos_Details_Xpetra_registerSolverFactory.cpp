@@ -78,7 +78,10 @@ void registerSolverFactory() {
 #if   (defined(HAVE_BELOS_EPETRA) &&  defined(EPETRA_HAVE_OMP) && (!defined(HAVE_BELOS_TPETRA) || !defined(HAVE_TPETRA_INST_OPENMP) || !defined(HAVE_TPETRA_INST_INT_INT)))
   // Epetra is enabled with OpenMP node, but Tpetra is a) not enabled, or b) is not instantiated on OpenMP, or c) is not instantiated on OpenMP with <double,int,int>
   typedef Kokkos::Compat::KokkosOpenMPWrapperNode EpetraNode;
-#elif (defined(HAVE_BELOS_EPETRA) && !defined(EPETRA_HAVE_OMP) && (!defined(HAVE_BELOS_TPETRA) || !defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT)))
+#elif (defined(HAVE_BELOS_EPETRA) && !defined(EPETRA_HAVE_HPX) && (!defined(HAVE_BELOS_TPETRA) || !defined(HAVE_TPETRA_INST_HPX) || !defined(HAVE_TPETRA_INST_INT_INT)))
+  // Epetra is enabled with Serial node, but Tpetra is a) not enabled, or b) is not instantiated on Serial, or c) is not instantiated on Serial with <double,int,int>
+  typedef Kokkos::Compat::KokkosSerialWrapperNode EpetraNode;
+#elif (defined(HAVE_BELOS_EPETRA) && !defined(EPETRA_HAVE_OMP) && !defined(EPETRA_HAVE_HPX) && (!defined(HAVE_BELOS_TPETRA) || !defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT)))
   // Epetra is enabled with Serial node, but Tpetra is a) not enabled, or b) is not instantiated on Serial, or c) is not instantiated on Serial with <double,int,int>
   typedef Kokkos::Compat::KokkosSerialWrapperNode EpetraNode;
 #endif
@@ -92,6 +95,7 @@ void registerSolverFactory() {
 // Epetra = on, Tpetra = on
 #if defined(HAVE_BELOS_EPETRA) && defined(HAVE_BELOS_TPETRA)
 #if ((defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_OPENMP) || !defined(HAVE_TPETRA_INST_INT_INT))) || \
+    (defined(EPETRA_HAVE_HPX) && !defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_HPX) || !defined(HAVE_TPETRA_INST_INT_INT))) || \
     (!defined(EPETRA_HAVE_OMP) && (!defined(HAVE_TPETRA_INST_SERIAL) || !defined(HAVE_TPETRA_INST_INT_INT))))
   #define BELOS_XPETRA_CALL(INSTMACRO) INSTMACRO(double, int, int, EpetraNode) TPETRA_INSTANTIATE_SLGN_NO_ORDINAL_SCALAR(INSTMACRO)
 # else

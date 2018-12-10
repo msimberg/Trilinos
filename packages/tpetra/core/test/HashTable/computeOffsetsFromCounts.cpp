@@ -121,6 +121,13 @@ namespace { // (anonymous)
   };
 #endif // KOKKOS_ENABLE_OPENMP
 
+#ifdef KOKKOS_ENABLE_HPX
+    template<>
+    struct ExecSpaceName<Kokkos::HPX> {
+        static const char* name () { return Kokkos::HPX::name(); }
+    };
+#endif // KOKKOS_ENABLE_HPX
+
 #ifdef KOKKOS_ENABLE_CUDA
   template<>
   struct ExecSpaceName<Kokkos::Cuda> {
